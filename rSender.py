@@ -200,10 +200,37 @@ class Sender:
                         if len(packets) == 0:  # Special case for checkpoint 1 (no data packets)
                             break
 
-                        raise NotImplementedError("Checkpoint 2 & 3: Sliding Window not implemented")
+                        # raise NotImplementedError("Checkpoint 2 & 3: Sliding Window not implemented")
 
                         # YOUR CODE HERE 
-                        
+                        # Check if this ACK advances our window (cumulative ACK)
+                        if ack.seq_num > left:
+                            # Save old boundaries to determine newly exposed packets
+                            old_left = left
+                            old_right = right
+
+                            # Slide the window forward based on the cumulative ACK
+                            new_left = ack.seq_num
+                            new_right = min(new_left + self.window_size, len(packets))
+
+                            # Update window variables
+                            left = new_left
+                            right = new_right
+                            window = packets[left:right]
+
+                            # If all packets have been acknowledged
+                            if left >= len(packets):
+                                break   # Exit the inner loop
+
+                            # Send any newly exposed packets (those between old_right and right)
+                            for i, pkt in enumerate(packets[old_right:right]):
+                                self.send_packet(pkt)
+                                # If RTT measurement is enabled, mark the first newly-sent packet
+                                if self.rtt_enabled and i == 0 and rtt_start_time is None:
+                                    rtt_start_time = time.time()
+                                    rtt_landmark_seq = pkt.seq_num
+
+                            timeout_start = time.time()
                         # END OF YOUR CODE
 
                 except socket.timeout:
