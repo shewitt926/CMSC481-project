@@ -134,19 +134,28 @@ class Sender:
                 # Calculate remaining time before timeout
                 remaining = timeout_value - (time.time() - timeout_start)
 
-                # Checkpoint 4: Packet Loss Recovery
                 if self.packet_loss_recovery_enabled and remaining <= 0:
                     """
+                    Checkpoint 4: Packet Loss Recovery
+
                     TODO: Implement timeout and retransmission
                     - Retransmit all packets in current window
                     - Reset timeout timer
                     - Continue to wait for ACKs
                     """
-                    raise NotImplementedError("Checkpoint 4: Packet Loss Recovery not implemented")
+                    # raise NotImplementedError("Checkpoint 4: Packet Loss Recovery not implemented")
 
                     # YOUR CODE HERE (within 10 lines)
-
-                    # END OF YOUR CODE
+                    # retransmit all packets currently in the window
+                    for pkt in window:
+                        self.send_packet(pkt)
+                    # if RTT measurement is enabled and it has no landmark...then mark it
+                    if self.rtt_enabled and rtt_start_time is None and len(window) > 0:
+                        rtt_start_time = time.time()
+                        rtt_landmark_seq = window[0].seq_num
+                    # reset timeout timer and continue waiting for ACKs
+                    timeout_start = time.time()
+                    # END OF CODE
 
                 self.socket.settimeout(max(0.01, remaining))
                 try:
@@ -170,14 +179,21 @@ class Sender:
                             - Log RTT measurements using self.log_rtt()
                             - Reset rtt_start_time to None after calculation
                             """
-                            raise NotImplementedError("Checkpoint 5: RTT Estimation not implemented")
+                            # raise NotImplementedError("Checkpoint 5: RTT Estimation not implemented")
                         
                             deviation = 0
                             change = 0
 
                             # YOUR CODE HERE (within 10 lines)
-                            
+                            current_time = time.time()
+                            self.sample_rtt = current_time - rtt_start_time
+                            previous_estimate = self.estimated_rtt
+                            self.estimated_rtt = (1 - self.alpha) * self.estimated_rtt + self.alpha * self.sample_rtt
+                            deviation = self.sample_rtt - previous_estimate
+                            change = self.estimated_rtt - previous_estimate
+                            rtt_start_time = None
                             # END OF YOUR CODE
+                            
 
                             self.log_rtt(f"Sample: {self.sample_rtt*1000:.2f}ms | Estimated: {self.estimated_rtt*1000:.2f}ms | Deviation: {deviation*1000:+.2f}ms | Change: {change*1000:+.2f}ms")
 
