@@ -149,7 +149,7 @@ class Sender:
                     # retransmit all packets currently in the window
                     for pkt in window:
                         self.send_packet(pkt)
-                    # if RTT measurement is enabled and it has no landmark...then mark it
+                    # if RTT measurement is enabled and it has no landmark...mark it
                     if self.rtt_enabled and rtt_start_time is None and len(window) > 0:
                         rtt_start_time = time.time()
                         rtt_landmark_seq = window[0].seq_num
